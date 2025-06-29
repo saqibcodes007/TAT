@@ -32,15 +32,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const resetUI = () => {
         clearAlerts();
-        processButton.disabled = true;
+        processButton.disabled = false; // Enable the button for a new run
         processButton.innerHTML = 'Process Charges';
         resultsSection.classList.add('hidden');
         resultsTableBody.innerHTML = '';
-        downloadButton.classList.add('hidden');
-        downloadButton.disabled = true;
+        
+        // Reset and disable the download link
+        downloadButton.classList.add('hidden', 'disabled');
+        downloadButton.removeAttribute('href');
+        downloadButton.removeAttribute('download');
+
         progressBarFill.style.width = '0%';
         progressContainer.classList.add('hidden');
-        progressBarFill.classList.remove('bg-danger'); // Reset progress bar color
+        progressBarFill.classList.remove('bg-danger');
     };
 
     // --- File Input Handling ---
@@ -51,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Support for Drag and Drop
     fileUploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -87,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         resetUI();
+        clearAlerts();
 
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -94,11 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('username', document.getElementById('username').value);
         formData.append('password', document.getElementById('password').value);
 
-        // --- UI Update for Processing Start ---
         processButton.disabled = true;
         processButton.innerHTML = '<i class="fas fa-cog fa-spin"></i> Processing...';
         progressContainer.classList.remove('hidden');
-        progressBarFill.style.width = '10%'; // Initial small progress
+        progressBarFill.style.width = '10%';
 
         let progress = 10;
         const progressInterval = setInterval(() => {
@@ -109,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
 
         try {
-            // --- Single API Call ---
             const response = await fetch('/api/process', {
                 method: 'POST',
                 body: formData,
@@ -122,25 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error || `HTTP error! status: ${response.status}`);
             }
 
-            // --- Success: Populate UI with Final Results ---
             progressBarFill.style.width = '100%';
             processButton.innerHTML = 'Processing Complete';
             resultsSection.classList.remove('hidden');
 
-            // Populate the results table
             if (data.results && data.results.length > 0) {
-                let tableHtml = '';
-                data.results.forEach(row => {
-                    tableHtml += `
-                        <tr>
-                            <td>${row.row_number || 'N/A'}</td>
-                            <td>${row.practice_name || ''}</td>
-                            <td>${row.patient_id || ''}</td>
-                            <td>${row.results || 'Success'}</td>
-                        </tr>
-                    `;
-                });
-                resultsTableBody.innerHTML = tableHtml;
+                resultsTableBody.innerHTML = data.results.map(row => `
+                    <tr>
+                        <td>${row.row_number || 'N/A'}</td>
+                        <td>${row.practice_name || ''}</td>
+                        <td>${row.patient_id || ''}</td>
+                        <td>${row.results || 'Success'}</td>
+                    </tr>
+                `).join('');
             } else {
                 resultsTableBody.innerHTML = '<tr><td colspan="4">Processing finished, but no result data was returned.</td></tr>';
             }
@@ -150,15 +146,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // **FIX 1**: Enable download button with correct attributes
             if (data.server_filename && data.download_filename) {
-                // Construct the URL with the desired filename as a query parameter
                 const downloadUrl = `/api/download_processed_file/${data.server_filename}?download_name=${encodeURIComponent(data.download_filename)}`;
                 
-                // Set both the href and the download attribute for robustness
                 downloadButton.href = downloadUrl;
                 downloadButton.setAttribute('download', data.download_filename);
                 
-                downloadButton.classList.remove('hidden');
-                downloadButton.disabled = false;
+                downloadButton.classList.remove('hidden', 'disabled');
             }
 
         } catch (error) {
