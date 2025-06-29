@@ -1,0 +1,8 @@
+Flask
+pandas
+zeep
+openpyxl
+pytz
+requests
+gunicorn
+xlsxwriter
