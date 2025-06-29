@@ -168,12 +168,13 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0, 170, 255, 0.4);
         }
-        .btn:disabled {
+        .btn:disabled, .btn.disabled { /* Add .disabled for <a> tags */
             background: #444;
             cursor: not-allowed;
+            pointer-events: none; /* Make disabled links not clickable */
+            opacity: 0.65;
         }
         
-        /* CORRECTED: New styles for the Bootstrap progress bar */
         .progress {
             border-radius: 10px;
             padding: 2px;
@@ -181,7 +182,7 @@
         .progress-bar {
             background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
             border-radius: 8px;
-            transition: width 0.4s ease-in-out; /* Adds a smooth animation */
+            transition: width 0.4s ease-in-out;
         }
 
         .results-table {
@@ -198,12 +199,10 @@
              font-weight: 600;
         }
 
-        /* Utility Classes (preserved from original) */
         .hidden {
             display: none;
         }
 
-        /* Footer */
         footer {
             padding: 2rem 0;
             margin-top: 3rem;
@@ -215,7 +214,6 @@
     </style>
 </head>
 <body>
-
     <header class="container text-center my-5">
         <div class="header-container">
             <img src="img/owl-logo.png" alt="Tebra Automation Tool Logo" class="logo">
@@ -279,9 +277,9 @@
                         </tbody>
                 </table>
             </div>
-            <button id="download-button" class="btn btn-success hidden" disabled>
+            <a id="download-button" href="#" class="btn btn-success hidden disabled" role="button">
                 <i class="fas fa-download me-2"></i>Download Output Excel
-            </button>
+            </a>
         </div>
     </div>
 
