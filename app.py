@@ -1345,10 +1345,9 @@ def _create_encounter_for_group_and_get_details(
 def is_row_failed(status_string):
     if not isinstance(status_string, str):
         return False
-    # A row is a "failure" if it contains an error word...
-    has_error = "error" in status_string.lower() or "failed" in status_string.lower() or "invalid" in status_string.lower()
-    # ...AND it did NOT result in a successfully created encounter.
-    is_successful = "encounter #" in status_string.lower()
+    lower_status = status_string.lower()
+    has_error = "err" in lower_status or "failed" in lower_status or "invalid" in lower_status
+    is_successful = "encounter #" in lower_status
     return has_error and not is_successful
 
 def run_all_phases_processing_adapted(df_param, actual_headers_map_param, tebra_client_param, tebra_header_param):
