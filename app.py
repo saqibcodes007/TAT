@@ -30,10 +30,14 @@ if not os.path.exists(UPLOAD_FOLDER):
 def index():
     return send_from_directory('.', 'index.html')
 
-# --- Route to serve other files like main.js and images ---
-@app.route('/<path:filename>')
-def serve_static(filename):
-    return send_from_directory('.', filename, as_attachment=False)
+# --- Routes to serve static files like main.js and images ---
+@app.route('/main.js')
+def serve_js():
+    return send_from_directory('.', 'main.js')
+
+@app.route('/img/<path:filename>')
+def serve_img(filename):
+    return send_from_directory('img', filename)
 
 
 # --- Helper: Display Message (from Colab PART 3) ---
@@ -1337,6 +1341,16 @@ def _create_encounter_for_group_and_get_details(
     if results['ErrorDetail'] and log_level_final == "error" and not results['SimpleMessage'].startswith("Enc API Err:"): display_message("debug", f"{row_identifier_log} Group Raw Error Detail: {results['ErrorDetail']}")
     return results
 
+# Helper function to determine if a row has truly failed
+def is_row_failed(status_string):
+    if not isinstance(status_string, str):
+        return False
+    # A row is a "failure" if it contains an error word...
+    has_error = "error" in status_string.lower() or "failed" in status_string.lower() or "invalid" in status_string.lower()
+    # ...AND it did NOT result in a successfully created encounter.
+    is_successful = "encounter #" in status_string.lower()
+    return has_error and not is_successful
+
 def run_all_phases_processing_adapted(df_param, actual_headers_map_param, tebra_client_param, tebra_header_param):
     # Initialize local caches for this processing run for thread safety
     g_practice_id_cache_local = {}
@@ -1502,8 +1516,7 @@ def run_all_phases_processing_adapted(df_param, actual_headers_map_param, tebra_
     error_col_actual = actual_headers_map_param.get("Results/Error", "Results/Error")
     payments_posted_series = df_param[error_col_actual].astype(str).str.contains(r"Payment #\w+ Posted", na=False, regex=True)
     payments_posted = payments_posted_series.sum()
-    failed_conditions = df_param[error_col_actual].astype(str).str.contains("Error|Failed|Invalid", case=False, na=False, regex=True)
-    failed_rows = failed_conditions.sum()
+    failed_rows = df_param[error_col_actual].apply(is_row_failed).sum()
     results_for_json = []
     practice_name_col = actual_headers_map_param.get("Practice", "Practice")
     patient_id_col = actual_headers_map_param.get("Patient ID", "Patient ID")
