@@ -1502,9 +1502,7 @@ def run_all_phases_processing_adapted(df_param, actual_headers_map_param, tebra_
     error_col_actual = actual_headers_map_param.get("Results/Error", "Results/Error")
     payments_posted_series = df_param[error_col_actual].astype(str).str.contains(r"Payment #\w+ Posted", na=False, regex=True)
     payments_posted = payments_posted_series.sum()
-    failed_conditions = (df_param[error_col_actual].astype(str).str.contains("Error|Failed|Skipped", case=False, na=False, regex=True) & \
-                        ~df_param[error_col_actual].astype(str).str.contains(r"Encounter #\w+ Created", na=False, regex=True) & \
-                        ~payments_posted_series)
+    failed_conditions = df_param[error_col_actual].astype(str).str.contains("Error|Failed|Invalid", case=False, na=False, regex=True)
     failed_rows = failed_conditions.sum()
     results_for_json = []
     practice_name_col = actual_headers_map_param.get("Practice", "Practice")
